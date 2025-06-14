@@ -18,6 +18,6 @@ enum Secrets {
     
     /// Validate that API key is configured
     static var isConfigured: Bool {
-        return !openAIAPIKey.isEmpty && !openAIAPIKey.contains("replace-with")
+        return !openAIAPIKey.isEmpty && !openAIAPIKey.contains("API_KEY")
     }
 } 
