@@ -30,7 +30,9 @@ class OpenAIMoodValidator: MoodValidatorProtocol {
         self.urlSession = urlSession
     }
     
-    // MARK: - MoodValidatorProtocol
+    /// Asynchronously determines if the given image matches the specified mood using OpenAI's GPT-4o Vision API.
+    ///
+    /// Returns `true` if the image is validated to match the mood, or `false` if validation fails or an error occurs.
     
     func validate(image: UIImage, forMood mood: String) async -> Bool {
         let result = await validateWithErrorHandling(image: image, forMood: mood)
@@ -43,6 +45,15 @@ class OpenAIMoodValidator: MoodValidatorProtocol {
         }
     }
     
+    /// Validates whether the provided image matches the specified mood using the OpenAI GPT-4o Vision API, returning a detailed result.
+    ///
+    /// Attempts to send the image and mood to the OpenAI API for validation, handling network errors, authentication issues, rate limiting, timeouts, and invalid responses. Returns a `Result` indicating success with a boolean value or a specific `ValidationError`.
+    ///
+    /// - Parameters:
+    ///   - image: The image to be validated.
+    ///   - mood: The mood to check for in the image.
+    ///
+    /// - Returns: `.success(true)` if the image matches the mood, `.success(false)` if not, or `.failure(ValidationError)` describing the error encountered.
     func validateWithErrorHandling(image: UIImage, forMood mood: String) async -> Result<Bool, ValidationError> {
         // Validate API key is configured
         guard Secrets.isConfigured else {
@@ -91,7 +102,17 @@ class OpenAIMoodValidator: MoodValidatorProtocol {
         }
     }
     
-    // MARK: - Private Methods
+    /// Constructs a URLRequest for the OpenAI chat completions endpoint to validate if an image matches a specified mood.
+    ///
+    /// The request includes a JSON payload with a system prompt and a user message containing the mood and the base64-encoded image. The model is instructed to respond with "yes" or "no" only.
+    ///
+    /// - Parameters:
+    ///   - base64Image: The image data encoded as a base64 JPEG string.
+    ///   - mood: The mood to validate against the image.
+    ///
+    /// - Returns: A configured URLRequest ready to be sent to the OpenAI API.
+    ///
+    /// - Throws: `ValidationError.networkError` if the API URL is invalid, or if encoding the payload fails.
     
     private func createOpenAIRequest(base64Image: String, mood: String) throws -> URLRequest {
         guard let url = URL(string: "\(baseURL)/chat/completions") else {
@@ -126,6 +147,13 @@ class OpenAIMoodValidator: MoodValidatorProtocol {
         return request
     }
     
+    /// Parses the OpenAI API response data to determine if the image matches the specified mood.
+    ///
+    /// Decodes the response, extracts the first message content, and checks if it contains "yes" (case-insensitive).
+    ///
+    /// - Parameter data: The raw response data from the OpenAI API.
+    /// - Returns: `.success(true)` if the response indicates a match, `.success(false)` otherwise.
+    /// - Throws: `ValidationError.invalidResponse` if the response cannot be decoded or does not contain the expected content.
     private func parseOpenAIResponse(_ data: Data) throws -> Result<Bool, ValidationError> {
         do {
             let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
@@ -145,6 +173,10 @@ class OpenAIMoodValidator: MoodValidatorProtocol {
         }
     }
     
+    /// Extracts an error message string from OpenAI API error response data.
+    ///
+    /// - Parameter data: The response data potentially containing an OpenAI error.
+    /// - Returns: The error message if present; otherwise, `nil`.
     private func extractErrorMessage(from data: Data) -> String? {
         do {
             let errorResponse = try JSONDecoder().decode(OpenAIErrorResponse.self, from: data)
@@ -187,6 +219,13 @@ private enum OpenAIContent: Codable {
         let url: String
     }
     
+    /// Encodes the `OpenAIContent` enum into the appropriate keyed container for JSON serialization.
+    ///
+    /// The encoded JSON includes a `"type"` field indicating the content type ("text" or "image_url"),
+    /// and the corresponding content data. Used for constructing OpenAI API request payloads.
+    ///
+    /// - Parameter encoder: The encoder to write data to.
+    /// - Throws: An error if encoding fails.
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         
@@ -241,7 +280,15 @@ private struct OpenAIError: Codable {
 
 // MARK: - Timeout Helper
 
-/// Add timeout to async operations
+/// Runs an asynchronous operation with a timeout, throwing an error if the operation does not complete in the specified time.
+///
+/// - Parameters:
+///   - seconds: The maximum duration to wait for the operation, in seconds.
+///   - operation: The asynchronous operation to execute.
+///
+/// - Throws: `TimeoutError` if the operation does not finish within the given time, or any error thrown by the operation itself.
+///
+/// - Returns: The result of the operation if it completes before the timeout.
 func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
     return try await withThrowingTaskGroup(of: T.self) { group in
         group.addTask {

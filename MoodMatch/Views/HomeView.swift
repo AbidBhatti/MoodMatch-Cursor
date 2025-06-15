@@ -129,6 +129,7 @@ struct HomeView: View {
         }
     }
     
+    /// Initializes a new game session and presents the game screen.
     private func startGame() {
         viewModel.startNewGame()
         showingGame = true

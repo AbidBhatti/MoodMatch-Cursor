@@ -16,7 +16,9 @@ class MoodProvider: ObservableObject {
         loadMoods()
     }
     
-    /// Load moods from the JSON file
+    /// Loads the list of moods from a JSON file in the app bundle, or uses a default set if loading fails.
+    /// 
+    /// Resets the used moods list after loading.
     private func loadMoods() {
         guard let url = Bundle.main.url(forResource: "moods", withExtension: "json"),
               let data = try? Data(contentsOf: url),
@@ -34,7 +36,11 @@ class MoodProvider: ObservableObject {
         usedMoods = []
     }
     
-    /// Get a random mood that hasn't been used recently
+    /// Returns a random mood prompt, ensuring moods are not repeated until all have been used.
+    ///
+    /// If all moods have been used, the pool is reset. Returns "Happy" if no moods are available.
+    ///
+    /// - Returns: A random mood string. If no moods are available, returns "Happy".
     func getRandomMood() -> String {
         // If we've used all moods, reset the pool
         if availableMoods.isEmpty {
@@ -53,7 +59,7 @@ class MoodProvider: ObservableObject {
         return selectedMood
     }
     
-    /// Reset the mood pool
+    /// Reloads the list of moods from the data source and resets the mood pools to their initial state.
     func reset() {
         loadMoods()
     }

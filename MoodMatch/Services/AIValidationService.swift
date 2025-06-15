@@ -17,7 +17,15 @@ class AIValidationService: MoodValidatorProtocol {
     /// - Parameters:
     ///   - image: The captured image
     ///   - mood: The mood prompt to validate against
-    /// - Returns: Boolean indicating if the image matches the mood
+    /// Asynchronously simulates validating an image against a mood prompt using AI logic.
+    ///
+    /// Adds an artificial delay to mimic an API call and returns a randomly generated Boolean result with a slight bias toward success. Intended for mock or testing purposes.
+    ///
+    /// - Parameters:
+    ///   - image: The image to validate.
+    ///   - mood: The mood prompt to validate against.
+    ///
+    /// - Returns: `true` if the image is considered to match the mood, otherwise `false`.
     func validate(image: UIImage, forMood mood: String) async -> Bool {
         // Simulate API call delay – unit tests can override `responseDelayNanoseconds` to speed things up
         if Self.responseDelayNanoseconds > 0 {
@@ -38,7 +46,15 @@ class AIValidationService: MoodValidatorProtocol {
     /// - Parameters:
     ///   - image: The captured image
     ///   - mood: The mood prompt to validate against
-    /// - Returns: Result enum with success/failure
+    /// Validates whether an image matches a given mood prompt, returning the result wrapped in a `Result`.
+    ///
+    /// This method asynchronously checks if the provided image corresponds to the specified mood and always returns a `.success` result containing the validation outcome. Error handling is included for interface compatibility, but no errors are currently generated.
+    ///
+    /// - Parameters:
+    ///   - image: The image to validate.
+    ///   - mood: The mood prompt to validate against.
+    ///
+    /// - Returns: A `Result` containing a Boolean indicating if the image matches the mood, or a `ValidationError` (never returned in this implementation).
     func validateWithErrorHandling(image: UIImage, forMood mood: String) async -> Result<Bool, ValidationError> {
         let result = await validate(image: image, forMood: mood)
         return .success(result)

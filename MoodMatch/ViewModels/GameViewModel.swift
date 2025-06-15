@@ -36,6 +36,7 @@ class GameViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
+    /// Sets up a binding to automatically hide the result overlay and proceed to the next round 3 seconds after the overlay is shown.
     private func setupBindings() {
         // Auto-hide result overlay after 3 seconds and continue to next round
         gameState.$showResultOverlay
@@ -47,21 +48,21 @@ class GameViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    /// Start a new game
+    /// Resets the game state and mood provider, then starts a new game round.
     func startNewGame() {
         gameState.startGame()
         moodProvider.reset()
         startNewRound()
     }
     
-    /// Start a new round with a fresh mood
+    /// Begins a new round by selecting a random mood, resetting the timer, and starting the countdown.
     func startNewRound() {
         gameState.currentMood = moodProvider.getRandomMood()
         gameState.resetTimer()
         startTimer()
     }
     
-    /// Start the countdown timer
+    /// Starts a repeating timer that triggers the countdown update every second.
     private func startTimer() {
         stopTimer()
         
@@ -70,13 +71,13 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Stop the current timer
+    /// Stops and invalidates the active game timer.
     private func stopTimer() {
         gameTimer?.invalidate()
         gameTimer = nil
     }
     
-    /// Update timer countdown
+    /// Decrements the round timer and handles timeout by marking the match as incorrect if time runs out.
     private func updateTimer() {
         if gameState.timeRemaining > 0 {
             gameState.timeRemaining -= 1
@@ -95,13 +96,19 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Handle photo capture
+    /// Stores the captured photo and initiates validation against the current mood.
+    ///
+    /// - Parameter image: The photo captured by the user.
     func capturePhoto(_ image: UIImage) {
         capturedImage = image
         validatePhoto(image)
     }
     
-    /// Validate captured photo against current mood
+    /// Validates the provided image against the current mood using the mood validator.
+    ///
+    /// If validation succeeds, updates the game state as correct or incorrect and displays the result overlay with appropriate haptic feedback.  
+    /// If validation fails due to an error, shows an error alert, restarts the timer, and provides error haptic feedback.  
+    /// Does nothing if there is no current mood.
     private func validatePhoto(_ image: UIImage) {
         guard !gameState.currentMood.isEmpty else { return }
         
@@ -148,7 +155,9 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Skip the current mood
+    /// Skips the current mood if skips remain and no validation or result overlay is active.
+    ///
+    /// Stops the timer, clears validation state and the captured image, uses a skip, starts a new round, and provides medium haptic feedback.
     func skipCurrentMood() {
         guard gameState.skipsRemaining > 0 && !gameState.isValidating && !gameState.showResultOverlay else { 
             return 
@@ -170,13 +179,13 @@ class GameViewModel: ObservableObject {
         impactFeedback.impactOccurred()
     }
     
-    /// Hide result overlay and reset
+    /// Hides the result overlay and clears the captured image.
     private func hideResultOverlay() {
         gameState.showResultOverlay = false
         capturedImage = nil
     }
     
-    /// Hide result overlay and continue to next round
+    /// Hides the result overlay and starts a new round if the game is not over.
     func hideResultOverlayAndContinue() {
         hideResultOverlay()
         
@@ -185,13 +194,19 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Check camera permission
+    /// Checks if the app has authorization to access the device camera.
+    ///
+    /// - Returns: `true` if camera access is authorized; otherwise, `false`.
     func checkCameraPermission() -> Bool {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         return status == .authorized
     }
     
-    /// Request camera permission
+    /// Requests camera access permission from the user.
+    ///
+    /// Calls the completion handler with `true` if access is granted, or `false` otherwise. The completion handler is always invoked on the main thread.
+    ///
+    /// - Parameter completion: Closure called with the result of the permission request.
     func requestCameraPermission(completion: @escaping (Bool) -> Void) {
         AVCaptureDevice.requestAccess(for: .video) { granted in
             DispatchQueue.main.async {
@@ -200,7 +215,7 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Clean up when view disappears
+    /// Stops the countdown timer and cancels all Combine subscriptions to clean up resources.
     func cleanup() {
         stopTimer()
         cancellables.removeAll()
