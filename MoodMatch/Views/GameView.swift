@@ -310,7 +310,9 @@ struct GameView: View {
         }
     }
     
-    // MARK: - Actions
+    /// Initiates the photo capture process by checking and requesting camera permission as needed.
+    ///
+    /// If camera permission is already granted, presents the camera interface. Otherwise, requests permission and shows an alert if access is denied.
     
     private func capturePhoto() {
         if viewModel.checkCameraPermission() {
@@ -326,6 +328,7 @@ struct GameView: View {
         }
     }
     
+    /// Checks and requests camera permission if not already granted, displaying an alert if permission is denied.
     private func checkCameraPermission() {
         if !viewModel.checkCameraPermission() {
             viewModel.requestCameraPermission { granted in

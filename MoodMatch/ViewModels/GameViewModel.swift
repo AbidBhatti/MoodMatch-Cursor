@@ -36,6 +36,7 @@ class GameViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
+    /// Sets up a binding to automatically hide the result overlay and proceed to the next round after it is shown for 3 seconds.
     private func setupBindings() {
         // Auto-hide result overlay after 3 seconds and continue to next round
         gameState.$showResultOverlay
@@ -47,21 +48,21 @@ class GameViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    /// Start a new game
+    /// Resets the game state and mood provider, then begins a new game round.
     func startNewGame() {
         gameState.startGame()
         moodProvider.reset()
         startNewRound()
     }
     
-    /// Start a new round with a fresh mood
+    /// Begins a new round by selecting a random mood, resetting the timer, and starting the countdown.
     func startNewRound() {
         gameState.currentMood = moodProvider.getRandomMood()
         gameState.resetTimer()
         startTimer()
     }
     
-    /// Start the countdown timer
+    /// Starts a repeating timer that updates the countdown every second for the current game round.
     private func startTimer() {
         stopTimer()
         
@@ -70,13 +71,15 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Stop the current timer
+    /// Stops and clears the active game timer.
     private func stopTimer() {
         gameTimer?.invalidate()
         gameTimer = nil
     }
     
-    /// Update timer countdown
+    /// Updates the countdown timer for the current round, handling timeouts as incorrect matches.
+    ///
+    /// Decrements the remaining time by one second. If time runs out, stops the timer, cancels any ongoing validation, and marks the match as incorrect.
     private func updateTimer() {
         if gameState.timeRemaining > 0 {
             gameState.timeRemaining -= 1
@@ -95,13 +98,21 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Handle photo capture
+    /// Stores the captured photo and initiates validation against the current mood.
+    ///
+    /// - Parameter image: The photo captured by the user.
     func capturePhoto(_ image: UIImage) {
         capturedImage = image
         validatePhoto(image)
     }
     
-    /// Validate captured photo against current mood
+    /// Validates the provided image against the current mood using the mood validator.
+    ///
+    /// If validation succeeds, updates the game state as a correct or incorrect match and displays the result overlay.  
+    /// If validation fails due to an error, shows an error alert and restarts the timer, allowing the user to try again.  
+    /// Provides haptic feedback based on the outcome.  
+    ///
+    /// - Parameter image: The photo to validate against the current mood.
     private func validatePhoto(_ image: UIImage) {
         guard !gameState.currentMood.isEmpty else { return }
         
@@ -148,7 +159,9 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Skip the current mood
+    /// Skips the current mood if skips are available and no validation or result overlay is active.
+    ///
+    /// Decrements the remaining skips, clears the captured image, and starts a new round with haptic feedback. Skipping is only allowed when not validating and the result overlay is not shown.
     func skipCurrentMood() {
         guard gameState.skipsRemaining > 0 && !gameState.isValidating && !gameState.showResultOverlay else { 
             return 
@@ -170,13 +183,13 @@ class GameViewModel: ObservableObject {
         impactFeedback.impactOccurred()
     }
     
-    /// Hide result overlay and reset
+    /// Hides the result overlay and clears the captured image.
     private func hideResultOverlay() {
         gameState.showResultOverlay = false
         capturedImage = nil
     }
     
-    /// Hide result overlay and continue to next round
+    /// Hides the result overlay and starts a new round if the game is not over.
     func hideResultOverlayAndContinue() {
         hideResultOverlay()
         
@@ -185,13 +198,17 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Check camera permission
+    /// Checks if the app has authorization to access the device camera.
+    ///
+    /// - Returns: `true` if camera access is authorized; otherwise, `false`.
     func checkCameraPermission() -> Bool {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         return status == .authorized
     }
     
-    /// Request camera permission
+    /// Requests camera access permission from the user and calls the completion handler with the result on the main thread.
+    ///
+    /// - Parameter completion: Closure called with `true` if access is granted, `false` otherwise.
     func requestCameraPermission(completion: @escaping (Bool) -> Void) {
         AVCaptureDevice.requestAccess(for: .video) { granted in
             DispatchQueue.main.async {
@@ -200,7 +217,7 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    /// Clean up when view disappears
+    /// Stops the countdown timer and cancels all Combine subscriptions to clean up resources.
     func cleanup() {
         stopTimer()
         cancellables.removeAll()
