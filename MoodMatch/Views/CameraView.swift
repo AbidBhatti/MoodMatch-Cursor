@@ -13,6 +13,11 @@ struct CameraView: UIViewControllerRepresentable {
     @Binding var isPresented: Bool
     let onImageCaptured: (UIImage) -> Void
     
+    /// Creates and configures a `UIImagePickerController` for capturing photos using the front camera.
+    ///
+    /// The picker is set to use the front-facing camera and disables editing. The coordinator is assigned as the delegate.
+    ///
+    /// - Returns: A configured `UIImagePickerController` instance for photo capture.
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
@@ -22,8 +27,12 @@ struct CameraView: UIViewControllerRepresentable {
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    /// Updates the presented image picker controller. No action is required for updates in this implementation.
+func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
     
+    /// Creates and returns a coordinator to handle image picker delegate callbacks for the camera view.
+    ///
+    /// - Returns: A `Coordinator` instance configured with the current camera view.
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -35,6 +44,11 @@ struct CameraView: UIViewControllerRepresentable {
             self.parent = parent
         }
         
+        /// Handles the completion of image picking by extracting the captured image and invoking the callback, then dismisses the picker.
+        ///
+        /// - Parameters:
+        ///   - picker: The image picker controller instance.
+        ///   - info: A dictionary containing information about the captured media.
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let image = info[.originalImage] as? UIImage {
                 parent.onImageCaptured(image)
@@ -42,6 +56,7 @@ struct CameraView: UIViewControllerRepresentable {
             parent.isPresented = false
         }
         
+        /// Handles cancellation of the image picker by dismissing the camera view.
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
             parent.isPresented = false
         }
@@ -52,6 +67,9 @@ struct CameraView: UIViewControllerRepresentable {
 struct CameraPreviewView: UIViewRepresentable {
     @State private var captureSession = AVCaptureSession()
     
+    /// Creates and returns a UIView displaying a live preview from the front camera.
+    ///
+    /// The view fills the screen and shows the camera feed using an AVCaptureVideoPreviewLayer. If the front camera is unavailable or setup fails, an empty view is returned.
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: UIScreen.main.bounds)
         
@@ -76,5 +94,6 @@ struct CameraPreviewView: UIViewRepresentable {
         return view
     }
     
-    func updateUIView(_ uiView: UIView, context: Context) {}
+    /// Updates the camera preview view. No action is required as the preview does not need to be updated after creation.
+func updateUIView(_ uiView: UIView, context: Context) {}
 } 

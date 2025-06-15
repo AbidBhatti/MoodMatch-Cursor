@@ -25,7 +25,7 @@ class GameState: ObservableObject {
     static let maxSkips = 3
     static let maxTime = 30
     
-    /// Reset game state to initial values
+    /// Resets all game state properties to their initial values, preparing for a new game session.
     func reset() {
         score = 0
         lives = Self.maxLives
@@ -39,26 +39,29 @@ class GameState: ObservableObject {
         lastResult = false
     }
     
-    /// Start a new game
+    /// Initializes a new game by resetting all state properties and marking the game as active.
     func startGame() {
         reset()
         isGameActive = true
     }
     
-    /// End the current game
+    /// Marks the game as ended by updating the active and game over status flags.
     func endGame() {
         isGameActive = false
         isGameOver = true
     }
     
-    /// Process a correct match
+    /// Updates the game state for a correct match.
+    ///
+    /// Increments the score, marks the last result as correct, and displays the result overlay.
     func correctMatch() {
         score += 1
         lastResult = true
         showResultOverlay = true
     }
     
-    /// Process an incorrect match
+    /// Handles an incorrect match by decrementing lives, updating the last result, and displaying the result overlay.
+    /// Ends the game if no lives remain.
     func incorrectMatch() {
         lives -= 1
         lastResult = false
@@ -69,14 +72,14 @@ class GameState: ObservableObject {
         }
     }
     
-    /// Use a skip
+    /// Decreases the number of skips remaining by one if any skips are available.
     func useSkip() {
         if skipsRemaining > 0 {
             skipsRemaining -= 1
         }
     }
     
-    /// Reset timer for new round
+    /// Resets the remaining time to the maximum allowed for a round.
     func resetTimer() {
         timeRemaining = Self.maxTime
     }

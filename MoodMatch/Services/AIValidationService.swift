@@ -17,7 +17,15 @@ class AIValidationService: MoodValidatorProtocol {
     /// - Parameters:
     ///   - image: The captured image
     ///   - mood: The mood prompt to validate against
-    /// - Returns: Boolean indicating if the image matches the mood
+    /// Asynchronously simulates validating an image against a mood prompt using AI.
+    ///
+    /// Introduces an artificial delay to mimic network latency, then returns a Boolean indicating whether the image matches the specified mood. The result is randomly determined with a slight bias toward success to simulate realistic gameplay outcomes.
+    ///
+    /// - Parameters:
+    ///   - image: The image to validate.
+    ///   - mood: The mood prompt to validate against.
+    ///
+    /// - Returns: `true` if the image is considered to match the mood; otherwise, `false`.
     func validate(image: UIImage, forMood mood: String) async -> Bool {
         // Simulate API call delay – unit tests can override `responseDelayNanoseconds` to speed things up
         if Self.responseDelayNanoseconds > 0 {
@@ -38,7 +46,11 @@ class AIValidationService: MoodValidatorProtocol {
     /// - Parameters:
     ///   - image: The captured image
     ///   - mood: The mood prompt to validate against
-    /// - Returns: Result enum with success/failure
+    /// Asynchronously validates an image against a mood prompt, returning the result wrapped in a `Result`.
+    ///
+    /// The validation outcome is always returned as `.success`, as this mock implementation does not produce errors.
+    ///
+    /// - Returns: A `Result` containing a Boolean indicating if the image matches the mood, always as `.success`.
     func validateWithErrorHandling(image: UIImage, forMood mood: String) async -> Result<Bool, ValidationError> {
         let result = await validate(image: image, forMood: mood)
         return .success(result)
